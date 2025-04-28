@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Swal from "sweetalert2";
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -20,7 +21,13 @@ export default function RegisterPage() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
+  const [isSwalLoaded, setSwalLoaded] = useState(false);
   const router = useRouter();
+
+  // Set SwalLoaded to true after component mounts to avoid SSR issues
+  useEffect(() => {
+    setSwalLoaded(true);
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -92,6 +99,19 @@ export default function RegisterPage() {
     e.preventDefault();
 
     if (!validateForm()) {
+      if (isSwalLoaded) {
+        // Show validation errors summary in SweetAlert
+        const errorMessages = Object.values(errors).filter((msg) => msg !== "");
+        if (errorMessages.length > 0) {
+          Swal.fire({
+            title: "Form tidak valid",
+            html: errorMessages.map((msg) => `- ${msg}`).join("<br>"),
+            icon: "warning",
+            confirmButtonColor: "#059669",
+            confirmButtonText: "Coba Lagi",
+          });
+        }
+      }
       return;
     }
 
@@ -114,21 +134,55 @@ export default function RegisterPage() {
       const data = await res.json();
 
       if (res.ok) {
-        // Show success message and redirect
-        router.push(
-          "/register-success?email=" + encodeURIComponent(formData.email)
-        );
+        if (isSwalLoaded) {
+          Swal.fire({
+            title: "Registrasi Berhasil!",
+            text: `Akun ${formData.email} berhasil dibuat. Silakan login untuk melanjutkan.`,
+            icon: "success",
+            confirmButtonColor: "#059669",
+            confirmButtonText: "Login Sekarang",
+          }).then((result) => {
+            if (result.isConfirmed) {
+              router.push("/login");
+            } else {
+              router.push("/login");
+            }
+          });
+        } else {
+          // Fallback if SweetAlert isn't loaded
+          router.push("/login");
+        }
+      } else {
+        if (isSwalLoaded) {
+          Swal.fire({
+            title: "Registrasi Gagal",
+            text: data.message || "Terjadi kesalahan saat registrasi",
+            icon: "error",
+            confirmButtonColor: "#059669",
+            confirmButtonText: "Coba Lagi",
+          });
+        } else {
+          setErrors((prev) => ({
+            ...prev,
+            server: data.message || "Terjadi kesalahan saat registrasi",
+          }));
+        }
+      }
+    } catch (err) {
+      if (isSwalLoaded) {
+        Swal.fire({
+          title: "Terjadi Kesalahan",
+          text: "Terjadi kesalahan. Silakan coba lagi nanti.",
+          icon: "error",
+          confirmButtonColor: "#059669",
+          confirmButtonText: "Tutup",
+        });
       } else {
         setErrors((prev) => ({
           ...prev,
-          server: data.message || "Terjadi kesalahan saat registrasi",
+          server: "Terjadi kesalahan. Silakan coba lagi nanti.",
         }));
       }
-    } catch (err) {
-      setErrors((prev) => ({
-        ...prev,
-        server: "Terjadi kesalahan. Silakan coba lagi nanti.",
-      }));
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -162,7 +216,7 @@ export default function RegisterPage() {
         </div>
 
         <div className="bg-white rounded-xl shadow-xl overflow-hidden">
-          {errors.server && (
+          {errors.server && !isSwalLoaded && (
             <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
               <div className="flex">
                 <div className="flex-shrink-0">

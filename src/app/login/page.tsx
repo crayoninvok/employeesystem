@@ -1,17 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import Swal from "sweetalert2";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isSwalLoaded, setSwalLoaded] = useState(false);
   const router = useRouter();
   const { login } = useAuth();
+
+  // Set SwalLoaded to true after component mounts to avoid SSR issues
+  useEffect(() => {
+    setSwalLoaded(true);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,17 +40,55 @@ export default function LoginPage() {
         // Use the login function from context
         login(data.token);
 
-        // Redirect based on user role
-        if (data.user.role === "ADMIN") {
-          window.location.href = "/admin/dashboard";
+        // Show success alert
+        if (isSwalLoaded) {
+          Swal.fire({
+            title: "Login Berhasil",
+            text: `Selamat datang, ${data.user.name}!`,
+            icon: "success",
+            timer: 1500,
+            showConfirmButton: false,
+          }).then(() => {
+            // Redirect based on user role
+            if (data.user.role === "ADMIN") {
+              window.location.href = "/admin/dashboard";
+            } else {
+              window.location.href = "/karyawan/dashboard";
+            }
+          });
         } else {
-          window.location.href = "/karyawan/dashboard";
+          // Fallback if SweetAlert is not loaded yet
+          if (data.user.role === "ADMIN") {
+            window.location.href = "/admin/dashboard";
+          } else {
+            window.location.href = "/karyawan/dashboard";
+          }
         }
       } else {
-        setError(data.message || "Login gagal. Silakan coba lagi.");
+        if (isSwalLoaded) {
+          Swal.fire({
+            title: "Login Gagal",
+            text: data.message || "Login gagal. Silakan coba lagi.",
+            icon: "error",
+            confirmButtonColor: "#3085d6",
+            confirmButtonText: "Coba Lagi",
+          });
+        } else {
+          setError(data.message || "Login gagal. Silakan coba lagi.");
+        }
       }
     } catch (err) {
-      setError("Terjadi kesalahan. Silakan coba lagi nanti.");
+      if (isSwalLoaded) {
+        Swal.fire({
+          title: "Terjadi Kesalahan",
+          text: "Terjadi kesalahan. Silakan coba lagi nanti.",
+          icon: "error",
+          confirmButtonColor: "#3085d6",
+          confirmButtonText: "Tutup",
+        });
+      } else {
+        setError("Terjadi kesalahan. Silakan coba lagi nanti.");
+      }
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -77,7 +122,7 @@ export default function LoginPage() {
         </div>
 
         <div className="bg-white rounded-xl shadow-xl overflow-hidden">
-          {error && (
+          {error && !isSwalLoaded && (
             <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
               <div className="flex">
                 <div className="flex-shrink-0">
