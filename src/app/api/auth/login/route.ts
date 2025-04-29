@@ -43,7 +43,8 @@ export async function POST(req: Request) {
         id: user.id,
         email: user.email,
         role: user.role,
-        name: user.name
+        name: user.name,
+        divisi: user.divisi
       },
       JWT_SECRET,
       { expiresIn: "7d" } // token berlaku 7 hari
@@ -58,6 +59,7 @@ export async function POST(req: Request) {
           name: user.name,
           email: user.email,
           role: user.role,
+          divisi: user.divisi
         },
       },
       { status: 200 }

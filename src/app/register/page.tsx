@@ -11,6 +11,7 @@ export default function RegisterPage() {
     email: "",
     password: "",
     confirmPassword: "",
+    divisi: "",
   });
   const [errors, setErrors] = useState({
     name: "",
@@ -18,6 +19,7 @@ export default function RegisterPage() {
     password: "",
     confirmPassword: "",
     server: "",
+    divisi: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
@@ -29,16 +31,16 @@ export default function RegisterPage() {
     setSwalLoaded(true);
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Clear specific field error when user types
     if (errors[name as keyof typeof errors]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
 
-    // Calculate password strength when password changes
     if (name === "password") {
       calculatePasswordStrength(value);
     }
@@ -63,6 +65,7 @@ export default function RegisterPage() {
       password: "",
       confirmPassword: "",
       server: "",
+      divisi: "",
     };
     let isValid = true;
 
@@ -71,6 +74,11 @@ export default function RegisterPage() {
       newErrors.name = "Nama harus terdiri dari minimal 3 karakter";
       isValid = false;
     }
+    if (!formData.divisi) {
+      newErrors.server = "Divisi harus dipilih";
+      isValid = false;
+    }
+
 
     // Validate email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -128,6 +136,7 @@ export default function RegisterPage() {
           name: formData.name,
           email: formData.email,
           password: formData.password,
+          divisi: formData.divisi, // ✅
         }),
       });
 
@@ -238,7 +247,6 @@ export default function RegisterPage() {
               </div>
             </div>
           )}
-
           <form onSubmit={handleSubmit} className="p-8">
             <div className="mb-6">
               <label
@@ -442,7 +450,31 @@ export default function RegisterPage() {
                 </p>
               )}
             </div>
-
+            <div className="mb-6">
+              <label
+                htmlFor="divisi"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Divisi
+              </label>
+              <div className="relative">
+                <select
+                  id="divisi"
+                  name="divisi"
+                  className="pl-3 w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  value={formData.divisi}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="">Pilih Divisi</option>
+                  <option value="HR">HR</option>
+                  <option value="IT">IT</option>
+                  <option value="Marketing">Marketing</option>
+                  <option value="Finance">Finance</option>
+                  <option value="Operasional">Operasional</option>
+                </select>
+              </div>
+            </div>
             <button
               type="submit"
               disabled={isLoading}

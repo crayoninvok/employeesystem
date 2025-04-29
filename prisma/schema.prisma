@@ -1,8 +1,8 @@
 // prisma/schema.prisma
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
@@ -33,6 +33,7 @@ model User {
   password  String
   name      String
   role      Role      @default(KARYAWAN)
+  divisi    String    @default("Belum Ditentukan")
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   absensi   Absensi[]
@@ -40,22 +41,22 @@ model User {
 }
 
 model Absensi {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
   date      DateTime
   checkIn   DateTime?
   checkOut  DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 }
 
 model Izin {
-  id        String      @id @default(uuid())
+  id        String     @id @default(uuid())
   userId    String
-  user      User        @relation(fields: [userId], references: [id])
+  user      User       @relation(fields: [userId], references: [id])
   tanggal   DateTime
   type      IzinType
   alasan    String
-  status    IzinStatus  @default(PENDING)
-  createdAt DateTime    @default(now())
+  status    IzinStatus @default(PENDING)
+  createdAt DateTime   @default(now())
 }

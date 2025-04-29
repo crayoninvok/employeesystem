@@ -5,9 +5,10 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { email, password, name } = body;
+    const { email, password, name, divisi } = body; // ✅ tambah divisi disini
 
-    if (!email || !password || !name) {
+    if (!email || !password || !name || !divisi) {
+      // ✅ validasi divisi juga
       return NextResponse.json(
         { message: "All fields are required" },
         { status: 400 }
@@ -32,7 +33,8 @@ export async function POST(req: Request) {
         email,
         password: hashedPassword,
         name,
-        role: "KARYAWAN", // <= SET OTOMATIS role KARYAWAN
+        divisi, // ✅ save divisi
+        role: "KARYAWAN", // ✅ role tetap otomatis
       },
     });
 

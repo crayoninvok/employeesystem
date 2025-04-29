@@ -25,6 +25,7 @@ interface DecodedToken {
   email: string;
   role: string;
   name: string;
+  divisi: string
 }
 
 export default function KaryawanDashboard() {
@@ -301,11 +302,16 @@ export default function KaryawanDashboard() {
                 Dashboard Karyawan
               </h1>
               {user && (
-                <p className="text-sm text-gray-600 mt-1">
-                  Selamat datang,{" "}
-                  <span className="font-medium">{user.name}</span> ({user.email}
-                  )
-                </p>
+                <div className="text-sm text-gray-600 mt-1 space-y-1">
+                  <p>
+                    Selamat datang,{" "}
+                    <span className="font-medium">{user.name}</span> (
+                    {user.email})
+                  </p>
+                  <p className="text-gray-500">
+                    Divisi: <span className="font-semibold">{user.divisi}</span>
+                  </p>
+                </div>
               )}
             </div>
             <div className="flex items-center gap-3 self-end md:self-auto">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 
@@ -60,20 +61,15 @@ export default function Navbar() {
               className="flex-shrink-0 flex items-center cursor-pointer"
               onClick={() => navigateTo("/")}
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-8 w-8 text-blue-600 mr-2"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span className="font-bold text-xl text-gray-800">
-                Employee System
+              <Image
+                src="/employe2.png"
+                alt="Employee System Logo"
+                width={64} // Diperbesar
+                height={64}
+                className="mr-3" // jaraknya juga sedikit dilebarkan
+              />
+              <span className="font-bold text-2xl text-gray-800">
+                Employee Portal
               </span>
             </div>
           </div>
