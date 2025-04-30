@@ -74,11 +74,12 @@ export default function RegisterPage() {
       newErrors.name = "Nama harus terdiri dari minimal 3 karakter";
       isValid = false;
     }
+
+    // Validate divisi
     if (!formData.divisi) {
-      newErrors.server = "Divisi harus dipilih";
+      newErrors.divisi = "Silakan pilih divisi";
       isValid = false;
     }
-
 
     // Validate email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -136,7 +137,7 @@ export default function RegisterPage() {
           name: formData.name,
           email: formData.email,
           password: formData.password,
-          divisi: formData.divisi, // ✅
+          divisi: formData.divisi,
         }),
       });
 
@@ -383,8 +384,8 @@ export default function RegisterPage() {
                           passwordStrength <= 1
                             ? "bg-red-500"
                             : passwordStrength <= 3
-                            ? "bg-yellow-500"
-                            : "bg-green-500"
+                              ? "bg-yellow-500"
+                              : "bg-green-500"
                         }`}
                         style={{ width: `${(passwordStrength / 5) * 100}%` }}
                       ></div>
@@ -393,8 +394,8 @@ export default function RegisterPage() {
                       {passwordStrength <= 1
                         ? "Lemah"
                         : passwordStrength <= 3
-                        ? "Sedang"
-                        : "Kuat"}
+                          ? "Sedang"
+                          : "Kuat"}
                     </span>
                   </div>
                   <p className="text-xs text-gray-500 mt-1">
@@ -458,22 +459,46 @@ export default function RegisterPage() {
                 Divisi
               </label>
               <div className="relative">
-                <select
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 text-gray-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                    />
+                  </svg>
+                </div>
+                <input
+                  type="text"
                   id="divisi"
                   name="divisi"
-                  className="pl-3 w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  list="divisi-options"
+                  placeholder="Pilih atau ketik divisi"
+                  className={`pl-10 w-full px-4 py-2 border ${
+                    errors.divisi ? "border-red-500" : "border-gray-300"
+                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500`}
                   value={formData.divisi}
                   onChange={handleChange}
                   required
-                >
-                  <option value="">Pilih Divisi</option>
+                />
+                <datalist id="divisi-options">
                   <option value="HR">HR</option>
                   <option value="IT">IT</option>
                   <option value="Marketing">Marketing</option>
                   <option value="Finance">Finance</option>
                   <option value="Operasional">Operasional</option>
-                </select>
+                </datalist>
               </div>
+              {errors.divisi && (
+                <p className="mt-1 text-sm text-red-600">{errors.divisi}</p>
+              )}
             </div>
             <button
               type="submit"

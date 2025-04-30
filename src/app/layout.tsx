@@ -28,7 +28,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Employee System",
+  title: "ABSENKEUN",
   description: "Simple employee attendance system",
 };
 
