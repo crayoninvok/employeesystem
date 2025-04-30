@@ -62,14 +62,14 @@ export default function Navbar() {
               onClick={() => navigateTo("/")}
             >
               <Image
-                src="/employe2.png"
+                src="/Absenkeun.png"
                 alt="Employee System Logo"
                 width={64} // Diperbesar
                 height={64}
                 className="mr-3" // jaraknya juga sedikit dilebarkan
               />
               <span className="font-bold text-2xl text-gray-800">
-                Employee Portal
+                ABSENKEUN
               </span>
             </div>
           </div>

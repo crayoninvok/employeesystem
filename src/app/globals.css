@@ -3,22 +3,68 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* Font fallback stacks */
+  --system-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --system-serif: Georgia, "Times New Roman", serif;
+  --system-mono: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 @theme inline {
   --color-background: var(--background);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-foreground: var(--foreground);
+
+  /* The variable names should match what you used in next/font config */
+  --font-sans: var(--font-sans), var(--system-sans);
+  --font-serif: var(--font-serif), var(--system-serif);
+  --font-mono: var(--font-mono), var(--system-mono);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
+    --foreground: #0a0a0a;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01", "ss02", "cv01", "cv02", "cv03";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Typography styling */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+code,
+pre,
+.mono {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+/* Additional utility classes */
+.heading {
+  font-family: var(--font-serif);
+}
+
+.body {
+  font-family: var(--font-sans);
+}
+
+.code {
+  font-family: var(--font-mono);
 }

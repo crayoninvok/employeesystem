@@ -28,16 +28,20 @@ enum IzinStatus {
 }
 
 model User {
-  id        String    @id @default(uuid())
-  email     String    @unique
-  password  String
-  name      String
-  role      Role      @default(KARYAWAN)
-  divisi    String    @default("Belum Ditentukan")
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  absensi   Absensi[]
-  izin      Izin[]
+  id                String    @id @default(uuid())
+  email             String    @unique
+  password          String
+  name              String
+  role              Role      @default(KARYAWAN)
+  divisi            String
+  verificationToken String?
+  emailVerified     DateTime? // Ubah dari Boolean ke DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  resetToken        String?
+  resetTokenExpiry  DateTime?
+  absensi           Absensi[]
+  izin              Izin[]
 }
 
 model Absensi {

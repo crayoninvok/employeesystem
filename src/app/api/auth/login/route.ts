@@ -21,15 +21,18 @@ export async function POST(req: Request) {
       where: { email },
     });
 
-    if (!user) {
+    if (!user || !user.emailVerified) {
       return NextResponse.json(
-        { message: "Invalid email or password" },
+        {
+          message: !user
+            ? "Invalid email or password"
+            : "Email belum diverifikasi",
+        },
         { status: 401 }
       );
     }
 
     const isPasswordValid = await compare(password, user.password);
-
     if (!isPasswordValid) {
       return NextResponse.json(
         { message: "Invalid email or password" },
@@ -37,17 +40,16 @@ export async function POST(req: Request) {
       );
     }
 
-    // Generate JWT Token
     const token = jwt.sign(
       {
         id: user.id,
         email: user.email,
         role: user.role,
         name: user.name,
-        divisi: user.divisi
+        divisi: user.divisi,
       },
       JWT_SECRET,
-      { expiresIn: "7d" } // token berlaku 7 hari
+      { expiresIn: "7d" }
     );
 
     return NextResponse.json(
@@ -59,7 +61,7 @@ export async function POST(req: Request) {
           name: user.name,
           email: user.email,
           role: user.role,
-          divisi: user.divisi
+          divisi: user.divisi,
         },
       },
       { status: 200 }
