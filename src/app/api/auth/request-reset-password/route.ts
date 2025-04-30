@@ -31,7 +31,8 @@ export async function POST(req: Request) {
     },
   });
 
-  await sendResetPasswordEmail(email, user.name, resetToken);
+  // ✅ Perbaiki urutan
+  await sendResetPasswordEmail(email, resetToken, user.name);
 
   return NextResponse.json({ message: "Link reset password telah dikirim" });
 }

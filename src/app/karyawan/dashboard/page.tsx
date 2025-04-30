@@ -10,6 +10,8 @@ interface Absensi {
   date: string;
   checkIn: string | null;
   checkOut: string | null;
+  status: "TEPAT_WAKTU" | "TERLAMBAT" | "DILUAR_JADWAL";
+  workDuration?: number;
 }
 
 interface Izin {
@@ -25,7 +27,7 @@ interface DecodedToken {
   email: string;
   role: string;
   name: string;
-  divisi: string
+  divisi: string;
 }
 
 export default function KaryawanDashboard() {
@@ -46,8 +48,22 @@ export default function KaryawanDashboard() {
     total: 0,
     tepatWaktu: 0,
     terlambat: 0,
+    diluarJadwal: 0,
     tidakCheckout: 0,
   });
+
+  // Time windows definitions for check-in/check-out
+  const timeWindows = {
+    checkIn: {
+      earliest: { hour: 6, minute: 15 }, // 06:15 WIB
+      onTimeLimit: { hour: 7, minute: 30 }, // 07:30 WIB
+      lateLimit: { hour: 8, minute: 30 }, // 08:30 WIB
+    },
+    checkOut: {
+      earliest: { hour: 16, minute: 0 }, // 16:00 WIB
+      latest: { hour: 21, minute: 0 }, // 21:00 WIB
+    },
+  };
 
   // Update time every second
   useEffect(() => {
@@ -57,6 +73,42 @@ export default function KaryawanDashboard() {
 
     return () => clearInterval(timer);
   }, []);
+
+  // Check if current time is within check-in window
+  const isWithinCheckInWindow = () => {
+    const hour = currentTime.getHours();
+    const minute = currentTime.getMinutes();
+    const currentTimeInMinutes = hour * 60 + minute;
+
+    const earliestTime =
+      timeWindows.checkIn.earliest.hour * 60 +
+      timeWindows.checkIn.earliest.minute;
+    const latestTime =
+      timeWindows.checkIn.lateLimit.hour * 60 +
+      timeWindows.checkIn.lateLimit.minute;
+
+    return (
+      currentTimeInMinutes >= earliestTime && currentTimeInMinutes <= latestTime
+    );
+  };
+
+  // Check if current time is within check-out window
+  const isWithinCheckOutWindow = () => {
+    const hour = currentTime.getHours();
+    const minute = currentTime.getMinutes();
+    const currentTimeInMinutes = hour * 60 + minute;
+
+    const earliestTime =
+      timeWindows.checkOut.earliest.hour * 60 +
+      timeWindows.checkOut.earliest.minute;
+    const latestTime =
+      timeWindows.checkOut.latest.hour * 60 +
+      timeWindows.checkOut.latest.minute;
+
+    return (
+      currentTimeInMinutes >= earliestTime && currentTimeInMinutes <= latestTime
+    );
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -90,6 +142,7 @@ export default function KaryawanDashboard() {
               total: absensiData.data.length,
               tepatWaktu: 0,
               terlambat: 0,
+              diluarJadwal: 0,
               tidakCheckout: 0,
             };
 
@@ -98,20 +151,12 @@ export default function KaryawanDashboard() {
                 stats.tidakCheckout++;
               }
 
-              if (item.checkIn) {
-                const checkInTime = new Date(item.checkIn);
-                // Consider 08:30 as the deadline for tepat waktu
-                const checkInHour = checkInTime.getHours();
-                const checkInMinute = checkInTime.getMinutes();
-
-                if (
-                  checkInHour < 8 ||
-                  (checkInHour === 8 && checkInMinute <= 30)
-                ) {
-                  stats.tepatWaktu++;
-                } else {
-                  stats.terlambat++;
-                }
+              if (item.status === "TEPAT_WAKTU") {
+                stats.tepatWaktu++;
+              } else if (item.status === "TERLAMBAT") {
+                stats.terlambat++;
+              } else if (item.status === "DILUAR_JADWAL") {
+                stats.diluarJadwal++;
               }
             });
 
@@ -171,6 +216,27 @@ export default function KaryawanDashboard() {
     const token = localStorage.getItem("token");
     if (!token) return;
 
+    // Check if within time window
+    if (!isWithinCheckInWindow()) {
+      let message = "";
+      const hour = currentTime.getHours();
+      const minute = currentTime.getMinutes();
+      const currentTimeInMinutes = hour * 60 + minute;
+
+      const earliestTime =
+        timeWindows.checkIn.earliest.hour * 60 +
+        timeWindows.checkIn.earliest.minute;
+
+      if (currentTimeInMinutes < earliestTime) {
+        message = `Check-in belum dibuka. Check-in dibuka mulai 06:15 WIB.`;
+      } else {
+        message = `Waktu check-in sudah berakhir. Check-in hanya berlaku sampai 08:30 WIB.`;
+      }
+
+      alert(message);
+      return;
+    }
+
     setSubmitLoading(true);
     try {
       const res = await fetch("/api/absensi/checkin", {
@@ -195,6 +261,30 @@ export default function KaryawanDashboard() {
   const handleCheckOut = async () => {
     const token = localStorage.getItem("token");
     if (!token) return;
+
+    // Check if within time window
+    if (!isWithinCheckOutWindow()) {
+      let message = "";
+      const hour = currentTime.getHours();
+      const minute = currentTime.getMinutes();
+      const currentTimeInMinutes = hour * 60 + minute;
+
+      const earliestTime =
+        timeWindows.checkOut.earliest.hour * 60 +
+        timeWindows.checkOut.earliest.minute;
+      const latestTime =
+        timeWindows.checkOut.latest.hour * 60 +
+        timeWindows.checkOut.latest.minute;
+
+      if (currentTimeInMinutes < earliestTime) {
+        message = `Check-out belum dibuka. Check-out dibuka mulai 16:00 WIB.`;
+      } else if (currentTimeInMinutes > latestTime) {
+        message = `Check-out sudah ditutup. Check-out hanya berlaku sampai 21:00 WIB.`;
+      }
+
+      alert(message);
+      return;
+    }
 
     setSubmitLoading(true);
     try {
@@ -384,8 +474,8 @@ export default function KaryawanDashboard() {
                       {izinHariIni.type === "SAKIT"
                         ? "Sakit"
                         : izinHariIni.type === "CUTI"
-                        ? "Cuti"
-                        : "Izin Lainnya"}
+                          ? "Cuti"
+                          : "Izin Lainnya"}
                     </p>
                     <p className="text-gray-600 text-sm mt-1">
                       Izin disetujui untuk hari ini
@@ -421,6 +511,23 @@ export default function KaryawanDashboard() {
                         <br />
                         Check-out:{" "}
                         {new Date(todayAbsensi.checkOut!).toLocaleTimeString()}
+                        <br />
+                        Status:{" "}
+                        <span
+                          className={
+                            todayAbsensi.status === "TEPAT_WAKTU"
+                              ? "text-green-600 font-medium"
+                              : todayAbsensi.status === "TERLAMBAT"
+                                ? "text-orange-600 font-medium"
+                                : "text-red-600 font-medium"
+                          }
+                        >
+                          {todayAbsensi.status === "TEPAT_WAKTU"
+                            ? "Tepat Waktu"
+                            : todayAbsensi.status === "TERLAMBAT"
+                              ? "Terlambat"
+                              : "Di Luar Jadwal"}
+                        </span>
                       </p>
                     </div>
                   </div>
@@ -450,14 +557,33 @@ export default function KaryawanDashboard() {
                         <p className="text-gray-600 text-sm mt-1">
                           Pada:{" "}
                           {new Date(todayAbsensi.checkIn!).toLocaleTimeString()}
+                          <br />
+                          Status:{" "}
+                          <span
+                            className={
+                              todayAbsensi.status === "TEPAT_WAKTU"
+                                ? "text-green-600 font-medium"
+                                : todayAbsensi.status === "TERLAMBAT"
+                                  ? "text-orange-600 font-medium"
+                                  : "text-red-600 font-medium"
+                            }
+                          >
+                            {todayAbsensi.status === "TEPAT_WAKTU"
+                              ? "Tepat Waktu"
+                              : todayAbsensi.status === "TERLAMBAT"
+                                ? "Terlambat"
+                                : "Di Luar Jadwal"}
+                          </span>
                         </p>
                       </div>
                     </div>
                     <button
                       onClick={handleCheckOut}
-                      disabled={submitLoading}
+                      disabled={submitLoading || !isWithinCheckOutWindow()}
                       className={`w-full flex justify-center items-center gap-2 bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg transition ${
-                        submitLoading ? "opacity-70 cursor-not-allowed" : ""
+                        submitLoading || !isWithinCheckOutWindow()
+                          ? "opacity-70 cursor-not-allowed"
+                          : ""
                       }`}
                     >
                       {submitLoading ? (
@@ -480,6 +606,9 @@ export default function KaryawanDashboard() {
                       )}
                       Check-out
                     </button>
+                    <p className="text-xs text-gray-500 mt-1 text-center">
+                      Check-out: 16:00 - 21:00 WIB
+                    </p>
                   </div>
                 )
               ) : (
@@ -512,9 +641,11 @@ export default function KaryawanDashboard() {
                   </div>
                   <button
                     onClick={handleCheckIn}
-                    disabled={submitLoading}
+                    disabled={submitLoading || !isWithinCheckInWindow()}
                     className={`w-full flex justify-center items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg transition ${
-                      submitLoading ? "opacity-70 cursor-not-allowed" : ""
+                      submitLoading || !isWithinCheckInWindow()
+                        ? "opacity-70 cursor-not-allowed"
+                        : ""
                     }`}
                   >
                     {submitLoading ? (
@@ -537,6 +668,10 @@ export default function KaryawanDashboard() {
                     )}
                     Check-in
                   </button>
+                  <p className="text-xs text-gray-500 mt-1 text-center">
+                    Check-in: 06:15 - 07:30 (Tepat Waktu), 07:31 - 08:30
+                    (Terlambat)
+                  </p>
                 </div>
               )}
             </div>
@@ -685,7 +820,13 @@ export default function KaryawanDashboard() {
 
                       // Calculate duration if both check-in and check-out exist
                       let duration = "--:--";
-                      if (checkInTime && checkOutTime) {
+                      if (absen.workDuration) {
+                        const hours = Math.floor(absen.workDuration);
+                        const minutes = Math.round(
+                          (absen.workDuration % 1) * 60
+                        );
+                        duration = `${hours} jam ${minutes} menit`;
+                      } else if (checkInTime && checkOutTime) {
                         const diff =
                           checkOutTime.getTime() - checkInTime.getTime();
                         const hours = Math.floor(diff / (1000 * 60 * 60));
@@ -695,26 +836,33 @@ export default function KaryawanDashboard() {
                         duration = `${hours} jam ${minutes} menit`;
                       }
 
-                      // Determine status
-                      let status = "Tidak Check-in";
-                      let statusClass = "bg-red-100 text-red-800";
+                      // Determine status display
+                      let statusDisplay = "";
+                      let statusClass = "";
 
-                      if (checkInTime) {
-                        const checkInHour = checkInTime.getHours();
-                        const checkInMinute = checkInTime.getMinutes();
-
-                        if (!checkOutTime) {
-                          status = "Belum Check-out";
-                          statusClass = "bg-yellow-100 text-yellow-800";
-                        } else if (
-                          checkInHour < 8 ||
-                          (checkInHour === 8 && checkInMinute <= 30)
-                        ) {
-                          status = "Tepat Waktu";
-                          statusClass = "bg-green-100 text-green-800";
-                        } else {
-                          status = "Terlambat";
-                          statusClass = "bg-orange-100 text-orange-800";
+                      if (!checkInTime) {
+                        statusDisplay = "Tidak Check-in";
+                        statusClass = "bg-red-100 text-red-800";
+                      } else if (!checkOutTime) {
+                        statusDisplay = "Belum Check-out";
+                        statusClass = "bg-yellow-100 text-yellow-800";
+                      } else {
+                        switch (absen.status) {
+                          case "TEPAT_WAKTU":
+                            statusDisplay = "Tepat Waktu";
+                            statusClass = "bg-green-100 text-green-800";
+                            break;
+                          case "TERLAMBAT":
+                            statusDisplay = "Terlambat";
+                            statusClass = "bg-orange-100 text-orange-800";
+                            break;
+                          case "DILUAR_JADWAL":
+                            statusDisplay = "Di Luar Jadwal";
+                            statusClass = "bg-red-100 text-red-800";
+                            break;
+                          default:
+                            statusDisplay = "Unknown";
+                            statusClass = "bg-gray-100 text-gray-800";
                         }
                       }
 
@@ -748,7 +896,7 @@ export default function KaryawanDashboard() {
                             <span
                               className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}`}
                             >
-                              {status}
+                              {statusDisplay}
                             </span>
                           </td>
                         </tr>
@@ -816,8 +964,8 @@ export default function KaryawanDashboard() {
                           {izin.type === "SAKIT"
                             ? "Sakit"
                             : izin.type === "CUTI"
-                            ? "Cuti"
-                            : "Izin Lainnya"}
+                              ? "Cuti"
+                              : "Izin Lainnya"}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-900">
                           {izin.alasan}

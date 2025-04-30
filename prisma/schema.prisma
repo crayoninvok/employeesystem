@@ -27,6 +27,12 @@ enum IzinStatus {
   REJECTED
 }
 
+enum CheckInStatus {
+  TEPAT_WAKTU
+  TERLAMBAT
+  DILUAR_JADWAL
+}
+
 model User {
   id                String    @id @default(uuid())
   email             String    @unique
@@ -45,13 +51,15 @@ model User {
 }
 
 model Absensi {
-  id        String    @id @default(uuid())
-  userId    String
-  user      User      @relation(fields: [userId], references: [id])
-  date      DateTime
-  checkIn   DateTime?
-  checkOut  DateTime?
-  createdAt DateTime  @default(now())
+  id           String        @id @default(uuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id])
+  date         DateTime
+  checkIn      DateTime?
+  checkOut     DateTime?
+  status       CheckInStatus @default(TEPAT_WAKTU)
+  workDuration Float?        // Durasi kerja dalam jam
+  createdAt    DateTime      @default(now())
 }
 
 model Izin {
