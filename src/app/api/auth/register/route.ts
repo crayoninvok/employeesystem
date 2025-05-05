@@ -5,15 +5,17 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { email, password, name, role } = body;
+    const { email, password, name, role, divisi } = body;
 
-    if (!email || !password || !name) {
+    // Validasi semua field wajib
+    if (!email || !password || !name || !divisi) {
       return NextResponse.json(
         { message: "All fields are required" },
         { status: 400 }
       );
     }
 
+    // Cek apakah email sudah terdaftar
     const existingUser = await prisma.user.findUnique({ where: { email } });
 
     if (existingUser) {
@@ -23,14 +25,17 @@ export async function POST(req: Request) {
       );
     }
 
+    // Hash password
     const hashedPassword = await hash(password, 10);
 
+    // Buat user baru
     const newUser = await prisma.user.create({
       data: {
         email,
         password: hashedPassword,
         name,
         role,
+        divisi,
       },
     });
 

@@ -39,7 +39,7 @@ model User {
   password          String
   name              String
   role              Role      @default(KARYAWAN)
-  divisi            String
+  divisi            String?
   verificationToken String?
   emailVerified     DateTime? // Ubah dari Boolean ke DateTime?
   createdAt         DateTime  @default(now())
